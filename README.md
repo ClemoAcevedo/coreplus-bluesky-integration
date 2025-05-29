@@ -15,6 +15,7 @@ Este repositorio contiene los scripts y módulos necesarios para integrar evento
 │   └── streams.py
 ├── main_bluesky.py
 └── test_bluesky_event_parser.py
+└── jetstream_rate_test.py
 ```
 
 ## 🚀 Funcionalidad
