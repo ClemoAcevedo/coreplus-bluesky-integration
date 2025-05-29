@@ -39,6 +39,14 @@ Este repositorio contiene los scripts y módulos necesarios para integrar evento
 
 - `main_bluesky.py`: Script principal, conecta Bluesky → CORE+.
 - `test_bluesky_event_parser.py`: Utilidad para parsear eventos complejos simulados.
+- `jetstream_rate_test.py`: Script autónomo que mide la tasa de eventos recibidos desde el firehose de Bluesky. Útil para estimar la carga de datos esperada y verificar conectividad básica.
+
+### 🔍 Medición de tasa de eventos
+
+Este script se puede ejecutar directamente desde cualquier entorno con Python 3 y `websockets` instalado, sin necesidad de CORE+:
+
+```bash
+python3 jetstream_rate_test.py
 
 ## 🔧 Uso
 
