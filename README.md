@@ -1,6 +1,6 @@
 # 🔵 coreplus-bluesky-integration
 
-Este repositorio contiene los scripts y módulos necesarios para integrar eventos en tiempo real desde la red social [Bluesky](https://bsky.app) con el motor de Reconocimiento de Eventos Complejos [CORE+](https://core.ing.uc.cl).
+Este repositorio contiene los scripts y módulos necesarios para integrar eventos en tiempo real desde la red social [Bluesky](https://bsky.app) con el motor de Reconocimiento de Eventos Complejos [CORE+]([https://core.ing.uc.cl](https://github.com/CORE-cer/CORE)).
 
 ## 📂 Estructura del Proyecto
 
