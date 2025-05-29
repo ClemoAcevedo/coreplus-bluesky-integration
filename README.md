@@ -48,7 +48,7 @@ Este script se puede ejecutar directamente desde cualquier entorno con Python 3 
 
 ```bash
 python3 jetstream_rate_test.py
-
+```
 ## 🔧 Uso
 
 ```bash
