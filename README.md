@@ -43,7 +43,7 @@ Este repositorio contiene los scripts y módulos necesarios para integrar evento
 ## 🔧 Uso
 
 ```bash
-# Desde la raíz del proyecto CORE+:
+# Desde la raíz del proyecto CORE+, main_bluesky.py y test_bluesky_event_parser.py deben estar en CORE/build/Debug:
 ./build/Debug/online_server -d "" -c "" -q "" -w 9000
 python3 ./build/Debug/main_bluesky.py
 ```
