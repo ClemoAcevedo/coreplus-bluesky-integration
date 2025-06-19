@@ -1,8 +1,10 @@
+# attributes.py
+
 """
 attributes.py
 =============
 
-• Funciones *create_*   →  construyen las listas de atributos (PyValue-s) que
+• Funciones *create_* →  construyen las listas de atributos (PyValue-s) que
   exige CORE+ a partir de los records Bluesky.
 
 • Funciones *get_robust_* →  obtienen timestamps “robustos” en nanosegundos:
@@ -275,3 +277,92 @@ def create_bluesky_repost_attributes(
         pycore_module.PyStringValue(subject_cid_str),
     ]
     return attributes
+
+def create_bluesky_profile_attributes(
+    op_details: dict[str, Any],
+    record_data: dict[str, Any],
+    commit_payload: dict[str, Any],
+    pycore_module,
+) -> list:
+    """
+    Crea atributos para BlueskyEvents.UpdateProfile.
+    Une displayName y description en un solo campo para evitar ambigüedad.
+    """
+    repo         = pycore_module.PyStringValue(commit_payload.get("repo", ""))
+    commit_cid   = pycore_module.PyStringValue(op_details.get("cid_str", ""))
+    seq          = pycore_module.PyIntValue(commit_payload.get("seq", -1))
+    
+    c_time_str = commit_payload.get("time")
+    commit_time_ns_float = get_robust_nanosecond_timestamp_as_float(c_time_str, None, "profile")
+    if commit_time_ns_float == 0.0 and c_time_str is None:
+        commit_time_ns_float = time.time() * 1e9
+    commit_time = pycore_module.PyDoubleValue(commit_time_ns_float)
+
+    display_name_str = ""
+    description_str = ""
+    if isinstance(record_data, dict):
+        display_name_str = record_data.get("displayName", "")
+        description_str = record_data.get("description", "")
+
+    # Unimos los campos con un separador fiable
+    profile_text_str = f"{display_name_str}|||{description_str}"
+    profile_text = pycore_module.PyStringValue(profile_text_str)
+
+    attributes = [
+        repo,
+        commit_cid,
+        seq,
+        commit_time,
+        profile_text,
+    ]
+    return attributes
+
+def create_bluesky_follow_attributes(
+    op_details: dict[str, Any],
+    record_data: dict[str, Any],
+    commit_payload: dict[str, Any],
+    pycore_module,
+) -> list:
+    """
+    Crea atributos para BlueskyEvents.CreateFollow
+    """
+    path = op_details.get("path", "")
+    repo = pycore_module.PyStringValue(commit_payload.get("repo", ""))
+    commit_cid = pycore_module.PyStringValue(op_details.get("cid_str", ""))
+    seq = pycore_module.PyIntValue(commit_payload.get("seq", -1))
+
+    rca_str = record_data.get("createdAt") if isinstance(record_data, dict) else None
+    c_time_str = commit_payload.get("time")
+    record_created_at = pycore_module.PyDateValue(
+        get_robust_nanosecond_timestamp_as_int(rca_str, c_time_str, path)
+    )
+    commit_time_ns = get_robust_nanosecond_timestamp_as_float(c_time_str, None, path)
+    if commit_time_ns == 0.0 and c_time_str is None:
+        commit_time_ns = time.time() * 1e9
+    commit_time = pycore_module.PyDoubleValue(commit_time_ns)
+
+    subject_did_str = ""
+    if isinstance(record_data, dict):
+        subject_did_str = record_data.get("subject", "")
+
+    attributes = [
+        repo,
+        commit_cid,
+        seq,
+        commit_time,
+        record_created_at,
+        pycore_module.PyStringValue(subject_did_str),
+    ]
+    return attributes
+
+def create_bluesky_block_attributes(
+    op_details: dict[str, Any],
+    record_data: dict[str, Any],
+    commit_payload: dict[str, Any],
+    pycore_module,
+) -> list:
+    """
+    Crea atributos para BlueskyEvents.CreateBlock
+    (Idéntico a Follow, pero semánticamente distinto)
+    """
+    return create_bluesky_follow_attributes(op_details, record_data, commit_payload, pycore_module)

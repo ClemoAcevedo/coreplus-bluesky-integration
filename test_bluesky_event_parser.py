@@ -301,9 +301,86 @@ class TestBlueskyEventParser(unittest.TestCase):
             any("Pattern for 'repo' did not match" in e for e in errs),
             "Expected 'repo' pattern error",
         )
-        # El valor puede ser cadena vacía (fallback) o el placeholder de error,
-        # dependiendo del modo estricto en parse_event_attributes:
         self.assertIn(parsed.get("repo", ""), ("", "<ERROR:MISSING_OR_NO_MATCH_REPO>"))
+
+    def test_create_follow(self):
+        evt = "BlueskyEvents.CreateFollow"
+        raw = (
+            "did:plc:follower "
+            f"{VALID_B_CID} 999 1730000000.111111 "
+            "1730000000000000000 did:plc:followed"
+        )
+        exp = {
+            "repo": "did:plc:follower",
+            "commit_cid": VALID_B_CID,
+            "seq": 999,
+            "commit_time": 1730000000.111111,
+            "record_created_at": 1730000000000000000,
+            "subject_did": "did:plc:followed",
+        }
+        parsed, errs = parse_event_attributes(evt, raw)
+        self.assertEqual(errs, [])
+        self.assertEqual(parsed, exp)
+
+    def test_update_profile_full(self):
+        """Prueba un perfil con nombre y descripción."""
+        evt = "BlueskyEvents.UpdateProfile"
+        raw = (
+            "did:plc:profilehaver "
+            f"{VALID_Z_CID} 123456 1740000000.222222 "
+            "Test User Name|||This is the full description with spaces and other characters."
+        )
+        exp = {
+            "repo": "did:plc:profilehaver",
+            "commit_cid": VALID_Z_CID,
+            "seq": 123456,
+            "commit_time": 1740000000.222222,
+            "display_name": "Test User Name",
+            "description": "This is the full description with spaces and other characters.",
+        }
+        parsed, errs = parse_event_attributes(evt, raw)
+        self.assertEqual(errs, [], f"Unexpected errors: {errs!r}")
+        self.assertEqual(parsed, exp)
+
+    def test_update_profile_no_description(self):
+        """Prueba un perfil con solo nombre y sin descripción."""
+        evt = "BlueskyEvents.UpdateProfile"
+        raw = (
+            "did:plc:profilehaver "
+            f"{VALID_Z_CID} 123457 1740000001.333333 "
+            "JustAName|||"
+        )
+        exp = {
+            "repo": "did:plc:profilehaver",
+            "commit_cid": VALID_Z_CID,
+            "seq": 123457,
+            "commit_time": 1740000001.333333,
+            "display_name": "JustAName",
+            "description": "",
+        }
+        parsed, errs = parse_event_attributes(evt, raw)
+        self.assertEqual(errs, [], f"Unexpected errors: {errs!r}")
+        self.assertEqual(parsed, exp)
+
+    def test_update_profile_empty_name_with_description(self):
+        """Prueba un perfil sin nombre pero con descripción."""
+        evt = "BlueskyEvents.UpdateProfile"
+        raw = (
+            "did:plc:profilehaver "
+            f"{VALID_Z_CID} 123458 1740000002.444444 "
+            "|||This is just a description."
+        )
+        exp = {
+            "repo": "did:plc:profilehaver",
+            "commit_cid": VALID_Z_CID,
+            "seq": 123458,
+            "commit_time": 1740000002.444444,
+            "display_name": "",
+            "description": "This is just a description.",
+        }
+        parsed, errs = parse_event_attributes(evt, raw)
+        self.assertEqual(errs, [], f"Unexpected errors: {errs!r}")
+        self.assertEqual(parsed, exp)
 
 
 # ══════════════════════════════════════════════════════════════

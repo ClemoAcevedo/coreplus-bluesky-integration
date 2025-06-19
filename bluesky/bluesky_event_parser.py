@@ -86,6 +86,34 @@ STREAM_ATTRIBUTE_DEFINITIONS: dict[str, list[dict[str, Any]]] = {
         {"name": "subject_cid",       "type": "string",        "regex_pattern": PAT_CID,
          "is_optional_empty": True, "default_empty": ""}, 
     ],
+    
+    "BlueskyEvents.UpdateProfile": [
+        {"name": "repo",              "type": "string", "regex_pattern": PAT_REPO},
+        {"name": "commit_cid",        "type": "string", "regex_pattern": PAT_CID},
+        {"name": "seq",               "type": "int",    "regex_pattern": PAT_INT},
+        {"name": "commit_time",       "type": "double", "regex_pattern": PAT_FLOAT},
+        # Este campo ahora contiene displayName y description unidos.
+        # Es el último, por lo que puede ser multitoken y consumir el resto de la línea.
+        {"name": "profile_text",      "type": "string_multitoken", "is_optional_empty": True, "default_empty": "|||"},
+    ],
+
+    "BlueskyEvents.CreateFollow": [
+        {"name": "repo",              "type": "string",        "regex_pattern": PAT_REPO},
+        {"name": "commit_cid",        "type": "string",        "regex_pattern": PAT_CID},
+        {"name": "seq",               "type": "int",           "regex_pattern": PAT_INT},
+        {"name": "commit_time",       "type": "double",        "regex_pattern": PAT_FLOAT},
+        {"name": "record_created_at", "type": "primary_time",  "regex_pattern": PAT_NS_INT},
+        {"name": "subject_did",       "type": "string",        "regex_pattern": PAT_REPO}, # Un DID tiene formato de repo
+    ],
+
+    "BlueskyEvents.CreateBlock": [
+        {"name": "repo",              "type": "string",        "regex_pattern": PAT_REPO},
+        {"name": "commit_cid",        "type": "string",        "regex_pattern": PAT_CID},
+        {"name": "seq",               "type": "int",           "regex_pattern": PAT_INT},
+        {"name": "commit_time",       "type": "double",        "regex_pattern": PAT_FLOAT},
+        {"name": "record_created_at", "type": "primary_time",  "regex_pattern": PAT_NS_INT},
+        {"name": "subject_did",       "type": "string",        "regex_pattern": PAT_REPO},
+    ]
 }
 
 # Pre-compilamos todas las regex
@@ -107,14 +135,10 @@ def parse_event_attributes(event_type_name: str, raw_line: str) -> tuple[dict[st
 
     · Maneja campos opcionales con `default_empty`.
     """
-    DEBUG_THIS_FUNCTION = False      # ← pon a True para trazar paso a paso
-
-    # util local para prints condicionados
+    DEBUG_THIS_FUNCTION = False
     def _dbg(msg: str) -> None:
-        if DEBUG_THIS_FUNCTION:
-            print(msg)
-
-    # -------------------------------------------------- Normalización
+        if DEBUG_THIS_FUNCTION: print(msg)
+    
     normalized = re.sub(r"\s+", " ", raw_line.replace("\xa0", " ")).strip()
     _dbg(f"\n[PARSER] {event_type_name}  original={repr(raw_line)}\n          norm = {repr(normalized)}")
 
@@ -126,84 +150,75 @@ def parse_event_attributes(event_type_name: str, raw_line: str) -> tuple[dict[st
     errors: list[str] = []
     remaining = normalized
 
-    # helper para default opcional
     def _opt_default(a_def: dict) -> Any:
-        if "default_empty" in a_def:
-            return a_def["default_empty"]
+        if "default_empty" in a_def: return a_def["default_empty"]
         t = a_def["type"]
         return 0 if t in ("int", "primary_time") else (0.0 if t == "double" else "")
 
-    # -------------------------------------------------- Parse secuencial
     for idx, a_def in enumerate(schema):
-        name      = a_def["name"]
-        a_type    = a_def["type"]
-        cregex    = a_def.get("_compiled_regex")
-        opt_empty = a_def.get("is_optional_empty", False)
-        default   = _opt_default(a_def)
-
+        name = a_def["name"]; a_type = a_def["type"]; cregex = a_def.get("_compiled_regex")
+        opt_empty = a_def.get("is_optional_empty", False); default = _opt_default(a_def)
         _dbg(f"  • {name:>18}  | remaining='{remaining[:70]}'")
-
         current_val_str: str | None = None
 
-        # ------------ SPECIAL: string_multitoken (solo record_text)
         if a_type == "string_multitoken":
-            if name == "record_text":
-                # Heurística: si inmediatamente hay un timestamp → texto vacío
-                if _RE_PRIMARY_TIME_WHOLE.match(remaining.lstrip()):
-                    current_val_str = ""
-                else:
-                    # delimitador = primera aparición del timestamp del campo siguiente
-                    next_regex = schema[idx + 1]["_compiled_regex"]
-                    m = re.search(rf"\s({next_regex.pattern})(?=\s|$)", remaining)
-                    if m:
-                        current_val_str = remaining[: m.start()].strip()
-                        remaining = remaining[m.start() :]
-                    else:
-                        current_val_str = remaining.strip()
-                        remaining = ""
+            if name == "record_text" and _RE_PRIMARY_TIME_WHOLE.match(remaining.lstrip()):
+                current_val_str = ""
             else:
-                current_val_str = remaining.strip()
-                remaining = ""
-
-        # ------------ Campos con regex “normal”
+                next_regex = None
+                for next_idx in range(idx + 1, len(schema)):
+                    if schema[next_idx].get("_compiled_regex"):
+                        next_regex = schema[next_idx]["_compiled_regex"]; break
+                if next_regex:
+                    m = re.search(rf"\s+({next_regex.pattern})(?=\s|$)", remaining)
+                    if m:
+                        current_val_str = remaining[:m.start()].strip()
+                        remaining = remaining[m.start():].strip()
+                    else:
+                        current_val_str = remaining.strip(); remaining = ""
+                else:
+                    current_val_str = remaining.strip(); remaining = ""
         elif cregex:
             m = cregex.match(remaining.lstrip())
             if m:
                 token = m.group(0)
-                # recortamos incluyendo espacios previos
-                cut = remaining.lstrip().index(token) + len(token)
+                cut_start_index = remaining.find(token)
+                if cut_start_index == -1: cut_start_index = len(remaining) - len(remaining.lstrip())
+                cut_end_index = cut_start_index + len(token)
                 current_val_str = token
-                remaining = remaining[cut + (len(remaining) - len(remaining.lstrip())) :]
+                remaining = remaining[cut_end_index:]
             elif opt_empty:
                 current_val_str = str(default)
             else:
                 errors.append(f"Pattern for '{name}' did not match near «{remaining[:40]}…»")
+                attributes[name] = default; continue
         else:
-            # sin regex
             current_val_str = "" if opt_empty else None
 
-        # ------------ Conversión a tipo python básico
         if current_val_str is not None:
             try:
                 match a_type:
-                    case "int" | "primary_time":
-                        attributes[name] = int(current_val_str)
-                    case "double":
-                        attributes[name] = float(current_val_str)
-                    case _:   # string / multitoken
-                        attributes[name] = str(current_val_str)
-            except ValueError as ve:
-                errors.append(f"Conversion error for '{name}': {ve}")
+                    case "int" | "primary_time": attributes[name] = int(current_val_str)
+                    case "double": attributes[name] = float(current_val_str)
+                    case _: attributes[name] = str(current_val_str).strip()
+            except (ValueError, TypeError) as ve:
+                errors.append(f"Conversion error for '{name}' from value '{current_val_str}': {ve}")
+                attributes[name] = default
         elif opt_empty:
             attributes[name] = default
-
         _dbg(f"      → {attributes.get(name)}")
 
-    # restos sin parsear
     if remaining.strip():
         errors.append(f"Extra unparsed content: '{remaining.strip()}'")
         attributes["_UNPARSED_REMAINDER_"] = remaining.strip()
 
+    # --- PASO DE POST-PROCESAMIENTO ---
+    if event_type_name == "BlueskyEvents.UpdateProfile" and "profile_text" in attributes:
+        profile_text = attributes.pop("profile_text") # Extraemos el campo combinado
+        parts = profile_text.split("|||", 1)
+        attributes["display_name"] = parts[0]
+        attributes["description"] = parts[1] if len(parts) > 1 else ""
+    
     if DEBUG_THIS_FUNCTION:
         print(json.dumps(attributes, indent=2), "\nErrors:", errors)
 

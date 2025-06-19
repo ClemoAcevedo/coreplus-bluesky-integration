@@ -1,3 +1,5 @@
+# streams.py
+
 """
 Declaraciones CREATE STREAM que se envían al motor CORE+.
 
@@ -12,24 +14,18 @@ exactamente en el mismo orden y tipo que produce `attributes.py`.
 # ──────────────────────────────────────────────────────────
 BLUESKY_EVENTS_STREAM_DECLARATION = """
 CREATE STREAM BlueskyEvents {
+    /* ... Eventos CreatePost, CreateLike, CreateRepost sin cambios ... */
     EVENT CreatePost {
-        /* Identificación básica del post ------------------------------------ */
         uri                 : string,
         commit_cid          : string,
         repo                : string,
         seq                 : int,
-
-        /* Timestamps -------------------------------------------------------- */
-        commit_time         : double,         /* ns epoch (from commit op)     */
-        record_text         : string,         /* cuerpo del post; puede ser '' */
-        record_created_at   : primary_time,   /* ns epoch – SOLO primary_time  */
-
-        /* Metadatos opcionales --------------------------------------------- */
+        commit_time         : double,
+        record_text         : string,
+        record_created_at   : primary_time,
         langs               : string,
         reply_root_uri      : string,
         reply_parent_uri    : string,
-
-        /* Embed ------------------------------------------------------------- */
         embed_type          : string,
         embed_image_count   : int,
         embed_external_uri  : string,
@@ -40,8 +36,8 @@ CREATE STREAM BlueskyEvents {
         commit_cid          : string,
         repo                : string,
         seq                 : int,
-        commit_time         : double,         /* ns epoch (commit op)          */
-        record_created_at   : primary_time,   /* ns epoch – SOLO primary_time  */
+        commit_time         : double,
+        record_created_at   : primary_time,
         subject_uri         : string,
         subject_cid         : string
     },
@@ -50,11 +46,35 @@ CREATE STREAM BlueskyEvents {
         commit_cid          : string,
         repo                : string,
         seq                 : int,
-        commit_time         : double,         /* ns epoch (commit op)          */
-        record_created_at   : primary_time,   /* ns epoch – SOLO primary_time  */
+        commit_time         : double,
+        record_created_at   : primary_time,
         subject_uri         : string,
         subject_cid         : string
+    },
+    
+    /* --- EVENTO CORREGIDO --- */
+    EVENT UpdateProfile {
+        repo                : string,         /* DID del perfil actualizado    */
+        commit_cid          : string,
+        seq                 : int,
+        commit_time         : double,
+        profile_text        : string          /* displayName y description unidos por '|||' */
+    },
+    EVENT CreateFollow {
+        repo                : string,         /* DID de quien sigue            */
+        commit_cid          : string,
+        seq                 : int,
+        commit_time         : double,
+        record_created_at   : primary_time,
+        subject_did         : string          /* DID de a quien se sigue       */
+    },
+    EVENT CreateBlock {
+        repo                : string,         /* DID de quien bloquea          */
+        commit_cid          : string,
+        seq                 : int,
+        commit_time         : double,
+        record_created_at   : primary_time,
+        subject_did         : string          /* DID de a quien se bloquea     */
     }
 }
 """
-
