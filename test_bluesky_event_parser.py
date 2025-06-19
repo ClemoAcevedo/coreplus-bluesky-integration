@@ -48,7 +48,7 @@ VALID_Z_CID = "zdpuAnBiHHaSXYXsyWD3CDggpkh83iQvQkA4UZSSbXT4pKuty"  # 49 chars
 class TestBlueskyEventParser(unittest.TestCase):
     def test_problematic_create_post_from_log(self):
         """Caso real que fallaba en producción (doble espacio + ‘0’ suelto)."""
-        evt = "BlueskyPosts.CreatePost"
+        evt = "BlueskyEvents.CreatePost"
         raw = (
             "at://did:plc:akkzm62zogz3r3y7hbdrdj52/app.bsky.feed.post/3lqbiwtbfs52p "
             f"{VALID_Z_CID} did:plc:akkzm62zogz3r3y7hbdrdj52 9692709225 "
@@ -77,7 +77,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_post_full_no_text(self):
-        evt = "BlueskyPosts.CreatePost"
+        evt = "BlueskyEvents.CreatePost"
         raw = (
             "at://did:plc:user/app.bsky.feed.post/id1 "
             f"{VALID_B_CID} did:plc:user 12345 1678886400.123456 "
@@ -109,7 +109,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_post_with_text(self):
-        evt = "BlueskyPosts.CreatePost"
+        evt = "BlueskyEvents.CreatePost"
         raw = (
             "at://did:plc:userx/app.bsky.feed.post/id2 "
             f"{VALID_B_CID} did:plc:userx 54321 1679000000.654321 "
@@ -139,7 +139,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_post_all_optionals_empty(self):
-        evt = "BlueskyPosts.CreatePost"
+        evt = "BlueskyEvents.CreatePost"
         raw = (
             "at://did:plc:usery/app.bsky.feed.post/id3 "
             f"{VALID_B_CID} did:plc:usery 98765 1680000000.000000 "
@@ -167,7 +167,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_like_basic(self):
-        evt = "BlueskyLikes.CreateLike"
+        evt = "BlueskyEvents.CreateLike"
         raw = (
             "at://did:plc:user1/app.bsky.feed.like/lk1 "
             f"{VALID_B_CID} did:plc:user1 12345 1710000000.123456 "
@@ -190,7 +190,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_like_optional_subject_cid_empty(self):
-        evt = "BlueskyLikes.CreateLike"
+        evt = "BlueskyEvents.CreateLike"
         raw = (
             "at://did:plc:user1/app.bsky.feed.like/lk2 "
             f"{VALID_B_CID} did:plc:user1 12346 1710000001.000000 "
@@ -212,7 +212,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_repost_basic(self):
-        evt = "BlueskyReposts.CreateRepost"
+        evt = "BlueskyEvents.CreateRepost"
         raw = (
             "at://did:plc:user1/app.bsky.feed.repost/rp1 "
             f"{VALID_B_CID} did:plc:user1 67890 1720000000.654321 "
@@ -235,7 +235,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_create_post_text_with_numbers_and_hyphens(self):
-        evt = "BlueskyPosts.CreatePost"
+        evt = "BlueskyEvents.CreatePost"
         raw = (
             "at://did:plc:test/app.bsky.feed.post/textnum "
             f"{VALID_B_CID} did:plc:test 1001 1679000000.000000 "
@@ -268,7 +268,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         self.assertEqual(parsed, exp)
 
     def test_unparseable_remainder(self):
-        evt = "BlueskyLikes.CreateLike"
+        evt = "BlueskyEvents.CreateLike"
         raw = (
             "at://did:plc:user1/app.bsky.feed.like/lk1 "
             f"{VALID_B_CID} did:plc:user1 12345 1710000000.123456 "
@@ -287,7 +287,7 @@ class TestBlueskyEventParser(unittest.TestCase):
         """
         Falta el campo 'repo'; aceptamos que parser deje '', pero debe reportar error.
         """
-        evt = "BlueskyLikes.CreateLike"
+        evt = "BlueskyEvents.CreateLike"
         raw = (
             "at://did:plc:user1/app.bsky.feed.like/lk1 "
             f"{VALID_B_CID} 12345 1710000000.123456 "
@@ -315,7 +315,7 @@ class TestBlueskyEventParserEdgeCases(unittest.TestCase):
         Caso tomado del log: record_text binario y '0' suelto al final;
         esperaba parsers sin resto ni errores.
         """
-        evt = "BlueskyPosts.CreatePost"
+        evt = "BlueskyEvents.CreatePost"
         raw = (
             "at://did:plc:fcnbisw7xl6lmtcnvioocffz/app.bsky.feed.post/3lqbs5wgrmp23 "
             "zdpuAkSUKCEP6hfXeJNk4D9FiXhoWpEbPzDkmwPyCjsk8CMJD "

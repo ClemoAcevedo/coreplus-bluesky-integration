@@ -17,7 +17,7 @@ from .attributes import (
 BLUESKY_EVENT_HANDLERS_CONFIG: dict[str, dict[str, object]] = {
     # --------------------------------------------------------------------- #
     "app.bsky.feed.post": {
-        "stream_name":       "BlueskyPosts",
+        "stream_name":       "BlueskyEvents",
         "event_name":        "CreatePost",
         "attribute_creator": create_bluesky_post_attributes,
         "stream_id":         None,   # ← se completa al arrancar
@@ -25,7 +25,7 @@ BLUESKY_EVENT_HANDLERS_CONFIG: dict[str, dict[str, object]] = {
     },
     # --------------------------------------------------------------------- #
     "app.bsky.feed.like": {
-        "stream_name":       "BlueskyLikes",
+        "stream_name":       "BlueskyEvents",
         "event_name":        "CreateLike",
         "attribute_creator": create_bluesky_like_attributes,
         "stream_id":         None,
@@ -33,7 +33,7 @@ BLUESKY_EVENT_HANDLERS_CONFIG: dict[str, dict[str, object]] = {
     },
     # --------------------------------------------------------------------- #
     "app.bsky.feed.repost": {
-        "stream_name":       "BlueskyReposts",
+        "stream_name":       "BlueskyEvents",
         "event_name":        "CreateRepost",
         "attribute_creator": create_bluesky_repost_attributes,
         "stream_id":         None,

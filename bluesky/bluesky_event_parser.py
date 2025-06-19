@@ -11,7 +11,6 @@ inyectar en CORE+.
 
 • `parse_event_attributes()` recorre el esquema secuencialmente: extrae,
   castea y devuelve `(attributes_dict, errors_list)`.
-
 """
 
 from __future__ import annotations
@@ -40,7 +39,7 @@ _RE_PRIMARY_TIME_WHOLE = re.compile(r"^\d{18,19}(?:\s|$)")
 # Esquema de streams / events (DDL ←→ parser)
 # ──────────────────────────────────────────────────────────
 STREAM_ATTRIBUTE_DEFINITIONS: dict[str, list[dict[str, Any]]] = {
-    "BlueskyPosts.CreatePost": [
+    "BlueskyEvents.CreatePost": [
         {"name": "uri",               "type": "string",        "regex_pattern": PAT_AT_URI},
         {"name": "commit_cid",        "type": "string",        "regex_pattern": PAT_CID},
         {"name": "repo",              "type": "string",        "regex_pattern": PAT_REPO},
@@ -64,7 +63,7 @@ STREAM_ATTRIBUTE_DEFINITIONS: dict[str, list[dict[str, Any]]] = {
          "is_optional_empty": True,   "default_empty": ""},
     ],
 
-    "BlueskyLikes.CreateLike": [
+    "BlueskyEvents.CreateLike": [
         {"name": "uri",               "type": "string",        "regex_pattern": PAT_AT_URI},
         {"name": "commit_cid",        "type": "string",        "regex_pattern": PAT_CID},
         {"name": "repo",              "type": "string",        "regex_pattern": PAT_REPO},
@@ -76,7 +75,7 @@ STREAM_ATTRIBUTE_DEFINITIONS: dict[str, list[dict[str, Any]]] = {
          "is_optional_empty": True,   "default_empty": ""},
     ],
 
-    "BlueskyReposts.CreateRepost": [
+    "BlueskyEvents.CreateRepost": [
         {"name": "uri",               "type": "string",        "regex_pattern": PAT_AT_URI},
         {"name": "commit_cid",        "type": "string",        "regex_pattern": PAT_CID},
         {"name": "repo",              "type": "string",        "regex_pattern": PAT_REPO},
@@ -84,7 +83,8 @@ STREAM_ATTRIBUTE_DEFINITIONS: dict[str, list[dict[str, Any]]] = {
         {"name": "commit_time",       "type": "double",        "regex_pattern": PAT_FLOAT},
         {"name": "record_created_at", "type": "primary_time",  "regex_pattern": PAT_NS_INT},
         {"name": "subject_uri",       "type": "string",        "regex_pattern": PAT_AT_URI},
-        {"name": "subject_cid",       "type": "string",        "regex_pattern": PAT_CID},
+        {"name": "subject_cid",       "type": "string",        "regex_pattern": PAT_CID,
+         "is_optional_empty": True, "default_empty": ""}, 
     ],
 }
 

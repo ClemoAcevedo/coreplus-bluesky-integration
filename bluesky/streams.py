@@ -1,18 +1,17 @@
 """
 Declaraciones CREATE STREAM que se envían al motor CORE+.
 
-Cada stream expone **un único evento** (CreatePost / CreateLike / CreateRepost)
-y define los atributos exactamente en el mismo orden y tipo que produce
-`attributes.py`.  
-El ﬁchero es importado por `main_bluesky.py`, que lee las constantes y
-las envía al servidor CORE+ en la fase de “bootstrap”.
+Se define un único stream consolidado (BlueskyEvents) que agrupa
+los eventos de Bluesky para simplificar las queries y la gestión.
+Cada evento (CreatePost, CreateLike, etc.) define los atributos
+exactamente en el mismo orden y tipo que produce `attributes.py`.
 """
 
 # ──────────────────────────────────────────────────────────
-# BlueskyPosts
+# Stream único para todos los eventos de Bluesky
 # ──────────────────────────────────────────────────────────
-BLUESKY_POST_STREAM_DECLARATION = """
-CREATE STREAM BlueskyPosts {
+BLUESKY_EVENTS_STREAM_DECLARATION = """
+CREATE STREAM BlueskyEvents {
     EVENT CreatePost {
         /* Identificación básica del post ------------------------------------ */
         uri                 : string,
@@ -35,15 +34,7 @@ CREATE STREAM BlueskyPosts {
         embed_image_count   : int,
         embed_external_uri  : string,
         embed_record_uri    : string
-    }
-}
-"""
-
-# ──────────────────────────────────────────────────────────
-# BlueskyLikes
-# ──────────────────────────────────────────────────────────
-BLUESKY_LIKE_STREAM_DECLARATION = """
-CREATE STREAM BlueskyLikes {
+    },
     EVENT CreateLike {
         uri                 : string,
         commit_cid          : string,
@@ -53,15 +44,7 @@ CREATE STREAM BlueskyLikes {
         record_created_at   : primary_time,   /* ns epoch – SOLO primary_time  */
         subject_uri         : string,
         subject_cid         : string
-    }
-}
-"""
-
-# ──────────────────────────────────────────────────────────
-# BlueskyReposts
-# ──────────────────────────────────────────────────────────
-BLUESKY_REPOST_STREAM_DECLARATION = """
-CREATE STREAM BlueskyReposts {
+    },
     EVENT CreateRepost {
         uri                 : string,
         commit_cid          : string,
@@ -74,3 +57,4 @@ CREATE STREAM BlueskyReposts {
     }
 }
 """
+
